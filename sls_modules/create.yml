@@ -1,0 +1,10 @@
+create:
+    handler: src/createBlob.createBlob
+    events:
+      - http:
+          path: /blobs
+          method: post
+          cors: true
+          request:
+            schemas:
+              application/json: ${file(src/schemas/createBlob_schema.json)}

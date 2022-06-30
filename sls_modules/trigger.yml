@@ -1,0 +1,7 @@
+trigger:
+    handler: src/processBlob.startBlob
+    events:
+      - s3:
+          bucket: ${self:provider.environment.S3_BUCKET}
+          event: s3:ObjectCreated:*
+          existing: true

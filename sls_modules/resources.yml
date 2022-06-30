@@ -1,0 +1,19 @@
+Resources:
+    ImageLabelingBucket:
+      Type: AWS::S3::Bucket
+
+    ImageLabelingTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: blob_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: blob_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE

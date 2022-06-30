@@ -1,4 +1,4 @@
-service: Rekognition API
+service: recognition-of-images
 
 plugins:
   - serverless-python-requirements
@@ -39,58 +39,13 @@ provider:
           Resource: "*"
 
 functions:
-  create:
-    handler: src/createBlob.createBlob
-    events:
-      - http:
-          path: /blobs
-          method: post
-          cors: true
-          request:
-            schemas:
-              application/json: ${file(src/schemas/createBlob_schema.json)}
-  trigger:
-    handler: src/processBlob.startBlob
-    events:
-      - s3:
-          bucket: ${self:provider.environment.S3_BUCKET}
-          event: s3:ObjectCreated:*
-          existing: true
-  get:
-    handler: src/getBlob.getBlob
-    events:
-      - http:
-          path: /blobs/{blob_id}
-          method: get
-          cors: true
-  callback:
-    handler: src/makeCallback.makeCallback
-    events:
-      - stream:
-          type: dynamodb
-          arn:
-            Fn::GetAtt: [ ImageLabelingTable, StreamArn ]
+  - ${file(./sls_modules/create.yml)}
+  - ${file(./sls_modules/get.yml)}
+  - ${file(./sls_modules/trigger.yml)}
+  - ${file(./sls_modules/callback.yml)}
 
 resources:
-  Resources:
-    ImageLabelingBucket:
-      Type: AWS::S3::Bucket
-
-    ImageLabelingTable:
-      Type: 'AWS::DynamoDB::Table'
-      DeletionPolicy: Retain
-      Properties:
-        AttributeDefinitions:
-          - AttributeName: blob_id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: blob_id
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        StreamSpecification:
-          StreamViewType: NEW_IMAGE
+  - ${file(./sls_modules/resources.yml)}
 
 package:
   patterns:

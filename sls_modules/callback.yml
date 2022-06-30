@@ -1,0 +1,7 @@
+callback:
+    handler: src/makeCallback.makeCallback
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt: [ ImageLabelingTable, StreamArn ]

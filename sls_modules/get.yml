@@ -1,0 +1,7 @@
+get:
+    handler: src/getBlob.getBlob
+    events:
+      - http:
+          path: /blobs/{blob_id}
+          method: get
+          cors: true
