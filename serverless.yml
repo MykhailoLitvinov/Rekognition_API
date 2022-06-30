@@ -1,0 +1,105 @@
+service: recognition-of-images
+
+plugins:
+  - serverless-python-requirements
+  - serverless-dotenv-plugin
+provider:
+  name: aws
+  runtime: python3.8
+  environment:
+    DYNAMODB_TABLE:
+      Ref: ImageLabelingTable
+    S3_BUCKET:
+      Ref: ImageLabelingBucket
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:ListStreams
+          Resource:
+            - Fn::GetAtt: [ ImageLabelingTable, Arn ]
+
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+          Resource:
+            - Fn::Sub: "${ImageLabelingBucket.Arn}/*"
+            - Fn::GetAtt: [ ImageLabelingBucket, Arn ]
+
+        - Effect: "Allow"
+          Action:
+            - "rekognition:*"
+          Resource: "*"
+
+functions:
+  create:
+    handler: src/createBlob.createBlob
+    events:
+      - http:
+          path: /blobs
+          method: post
+          cors: true
+  trigger:
+    handler: src/processBlob.startBlob
+    events:
+      - s3:
+          bucket: ${self:provider.environment.S3_BUCKET}
+          event: s3:ObjectCreated:*
+          existing: true
+  get:
+    handler: src/getBlob.getBlob
+    events:
+      - http:
+          path: /blobs/{blob_id}
+          method: get
+          cors: true
+
+  callback:
+    handler: src/makeCallback.makeCallback
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt: [ ImageLabelingTable, StreamArn ]
+#          batchSize: 1
+#          startingPosition: LATEST
+#          arn:
+#            Fn::GetAtt:
+#              - ImageLabelingTable
+#              - StreamArn
+
+resources:
+  Resources:
+    ImageLabelingBucket:
+      Type: AWS::S3::Bucket
+
+    ImageLabelingTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: blob_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: blob_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!env/**'
+    - '!venv/**'
+    - '!test.py'
