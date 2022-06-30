@@ -1,0 +1,12 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "The Root Schema",
+  "type": "object",
+  "required": ["callback_url"],
+  "properties": {
+    "callback_url": {
+      "type": "string"
+    }
+  }
+}

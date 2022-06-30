@@ -1,22 +1,22 @@
 import requests
 
-HEADERS = {'Content-Type': 'application/json'}
+HEADERS = {"Content-Type": "application/json"}
 
 
 def makeCallback(event, context):
     try:
-        for record in event.get('Records'):
-            if record.get('eventName') != 'MODIFY':
+        for record in event.get("Records"):
+            if record.get("eventName") != "MODIFY":
                 continue
 
-            newImage = record.get('dynamodb').get('NewImage')
-            blob_record = newImage.get('blob_info')
+            newImage = record.get("dynamodb").get("NewImage")
+            blob_record = newImage.get("labels")
 
             if not blob_record:
                 continue
 
-            blob_info = blob_record.get('S')
-            callback_url = newImage.get('callback_url').get('S')
+            blob_info = blob_record.get("S")
+            callback_url = newImage.get("callback_url").get("S")
 
             requests.post(url=callback_url, data=blob_info, headers=HEADERS)
     except Exception as e:
